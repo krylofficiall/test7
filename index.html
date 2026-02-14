@@ -1,1 +1,917 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VR Детектив: Часть 2 — Методологии</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #58CC02;
+    --green-dark: #46A302;
+    --green-light: #D7F5A0;
+    --blue: #1CB0F6;
+    --blue-dark: #0099D9;
+    --red: #FF4B4B;
+    --red-light: #FFE0E0;
+    --yellow: #FFD600;
+    --yellow-light: #FFF9C4;
+    --purple: #CE82FF;
+    --purple-dark: #A855F7;
+    --orange: #FF9600;
+    --orange-dark: #E07800;
+    --teal: #00B5AD;
+    --bg: #F0F4FF;
+    --card: #FFFFFF;
+    --text: #2D2D2D;
+    --text-light: #777;
+    --border: #E2E8F0;
+    --shadow: 0 4px 0 rgba(0,0,0,0.10);
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 40px;
+    background-image: radial-gradient(circle at 20% 20%, #E0E7FF 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, #EDE9FE 0%, transparent 50%);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    width: 100%;
+    max-width: 700px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .close-btn {
+    width: 38px; height: 38px;
+    border: none; background: white; cursor: pointer;
+    font-size: 20px; color: var(--text-light);
+    border-radius: 10px; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+    flex-shrink: 0;
+  }
+  .close-btn:hover { background: #F0F0F0; }
+  .progress-bar-wrap {
+    flex: 1; height: 16px;
+    background: white;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 2px solid var(--border);
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    border-radius: 999px;
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+  .hearts { font-size: 20px; letter-spacing: 2px; min-width: 84px; text-align: right; flex-shrink: 0; }
+
+  /* ── SCREENS ── */
+  .screen { width: 100%; max-width: 700px; display: none; animation: fadeUp .35s ease both; }
+  .screen.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── START ── */
+  .start-card {
+    background: var(--card);
+    border-radius: 28px;
+    padding: 40px 32px;
+    text-align: center;
+    border: 2px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .start-emoji { font-size: 76px; margin-bottom: 10px; display: block; }
+  .part-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    color: white;
+    border-radius: 99px;
+    padding: 4px 16px;
+    font-size: 13px;
+    font-weight: 900;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .start-card h1 { font-size: 28px; font-weight: 900; margin-bottom: 8px; }
+  .start-card .sub { font-size: 15px; color: var(--text-light); line-height: 1.6; margin-bottom: 24px; }
+
+  .method-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .method-chip {
+    border-radius: 16px;
+    padding: 14px 12px;
+    text-align: center;
+    border: 2.5px solid;
+    font-weight: 800;
+    font-size: 14px;
+  }
+  .method-chip .ci { font-size: 28px; display: block; margin-bottom: 5px; }
+  .chip-waterfall { background: #FFF7E6; border-color: var(--orange); color: #7A3B00; }
+  .chip-agile     { background: #E6F7FF; border-color: var(--blue);   color: #003A7A; }
+  .chip-scrum     { background: #F0FDE4; border-color: var(--green);  color: #1A5200; }
+  .chip-lean      { background: #F5F0FF; border-color: var(--purple); color: #4A0080; }
+
+  .mascot-row { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+  .mascot { font-size: 44px; flex-shrink: 0; margin-top: 2px; }
+  .speech-bubble {
+    background: #F0F7FF;
+    border: 2px solid #B3DDF8;
+    border-radius: 16px 16px 16px 4px;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1A3A5C;
+    line-height: 1.6;
+    flex: 1;
+  }
+
+  /* ── QUESTION CARD ── */
+  .q-card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 26px 26px 22px;
+    border: 2px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+  }
+
+  .q-label-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .q-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 10px; padding: 5px 13px;
+    font-size: 12px; font-weight: 900; letter-spacing: .5px;
+  }
+  .label-waterfall { background: #FFF0D0; border: 2px solid var(--orange); color: #7A3B00; }
+  .label-agile     { background: #D0EEFF; border: 2px solid var(--blue);   color: #003A7A; }
+  .label-scrum     { background: #D0F8D0; border: 2px solid var(--green);  color: #1A5200; }
+  .label-lean      { background: #EDD0FF; border: 2px solid var(--purple); color: #4A0080; }
+  .label-mixed     { background: var(--yellow-light); border: 2px solid var(--yellow); color: #7A6000; }
+
+  .q-num { font-size: 12px; font-weight: 800; color: var(--text-light); margin-left: auto; }
+
+  .q-title { font-size: 19px; font-weight: 900; line-height: 1.4; margin-bottom: 14px; }
+
+  .case-box {
+    background: linear-gradient(135deg, #F8F9FF, #EFF1FF);
+    border: 2px solid #C7D2FE;
+    border-radius: 16px;
+    padding: 16px 18px;
+    margin-bottom: 18px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #2A3060;
+  }
+  .case-box strong { color: #3730A3; font-weight: 800; }
+  .case-box em { font-style: italic; color: #6366F1; font-weight: 700; }
+
+  .funny-tag {
+    display: inline-block;
+    background: var(--yellow-light);
+    border: 2px solid var(--yellow);
+    border-radius: 8px;
+    padding: 2px 9px;
+    font-size: 12px;
+    font-weight: 800;
+    color: #7A6000;
+    margin-bottom: 10px;
+  }
+
+  .q-prompt { font-size: 16px; font-weight: 800; margin-bottom: 14px; color: var(--text); }
+
+  /* ── OPTIONS ── */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option-btn {
+    display: flex; align-items: flex-start; gap: 13px;
+    background: white;
+    border: 2.5px solid var(--border);
+    border-radius: 16px;
+    padding: 13px 16px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 14.5px; font-weight: 700;
+    color: var(--text); text-align: left;
+    transition: border-color .15s, background .15s, transform .1s;
+    box-shadow: 0 3px 0 var(--border);
+    line-height: 1.5;
+  }
+  .option-btn:hover:not(:disabled) {
+    border-color: var(--blue); background: #F0F9FF;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 #B3DDF8;
+  }
+  .option-btn .opt-letter {
+    width: 30px; height: 30px;
+    border: 2.5px solid var(--border);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 13px; flex-shrink: 0;
+    transition: all .15s; margin-top: 1px;
+  }
+  .option-btn.selected { border-color: var(--blue); background: #E8F6FF; box-shadow: 0 3px 0 #B3DDF8; }
+  .option-btn.selected .opt-letter { background: var(--blue); border-color: var(--blue); color: white; }
+  .option-btn.correct { border-color: var(--green); background: #F0FDE4; box-shadow: 0 3px 0 #A8E063; }
+  .option-btn.correct .opt-letter { background: var(--green); border-color: var(--green); color: white; }
+  .option-btn.wrong   { border-color: var(--red); background: var(--red-light); box-shadow: 0 3px 0 #FFB3B3; }
+  .option-btn.wrong .opt-letter   { background: var(--red); border-color: var(--red); color: white; }
+  .option-btn:disabled { cursor: default; transform: none !important; }
+
+  /* ── FEEDBACK ── */
+  .feedback-panel { border-radius: 18px; padding: 16px 20px; margin-top: 12px; display: none; }
+  .feedback-panel.show { display: block; animation: fadeUp .25s ease both; }
+  .feedback-panel.correct-fb { background: #F0FDE4; border: 2px solid var(--green); }
+  .feedback-panel.wrong-fb   { background: var(--red-light); border: 2px solid var(--red); }
+  .fb-header { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 900; margin-bottom: 8px; }
+  .fb-icon { font-size: 22px; }
+  .correct-fb .fb-header { color: var(--green-dark); }
+  .wrong-fb   .fb-header { color: var(--red); }
+  .fb-body { font-size: 13.5px; line-height: 1.65; color: var(--text); }
+  .fb-body strong { font-weight: 900; }
+  .fb-body .method-pill {
+    display: inline-block;
+    border-radius: 8px;
+    padding: 2px 9px;
+    font-size: 12px; font-weight: 900; border: 2px solid;
+    margin: 0 2px;
+    white-space: nowrap;
+  }
+
+  /* ── ACTION AREA ── */
+  .action-area { display: flex; justify-content: flex-end; gap: 12px; margin-top: 14px; }
+  .btn-check {
+    background: var(--green); color: white; border: none;
+    border-radius: 16px; padding: 15px 34px;
+    font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 0 var(--green-dark);
+    transition: transform .1s, box-shadow .1s;
+    letter-spacing: .4px;
+  }
+  .btn-check:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--green-dark); }
+  .btn-check:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--green-dark); }
+  .btn-check:disabled { background: #D0D0D0; box-shadow: 0 5px 0 #ABABAB; cursor: default; transform: none; }
+  .btn-check.next-mode { background: var(--purple); box-shadow: 0 5px 0 var(--purple-dark); }
+  .btn-check.next-mode:hover { box-shadow: 0 7px 0 var(--purple-dark); }
+
+  /* ── STREAK ── */
+  .streak-banner {
+    display: none; position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%) scale(.7);
+    background: linear-gradient(135deg, var(--yellow), #FFAA00);
+    border: 4px solid #E6A000;
+    border-radius: 28px; padding: 28px 48px;
+    text-align: center; z-index: 200;
+    box-shadow: 0 24px 60px rgba(0,0,0,.25);
+    animation: popIn .4s cubic-bezier(.34,1.56,.64,1) both;
+  }
+  .streak-banner.show { display: block; }
+  @keyframes popIn {
+    from { transform: translate(-50%,-50%) scale(.5); opacity: 0; }
+    to   { transform: translate(-50%,-50%) scale(1);  opacity: 1; }
+  }
+  .streak-emoji-big { font-size: 60px; }
+  .streak-banner h2 { font-size: 26px; font-weight: 900; color: #6B3A00; margin-top: 6px; }
+  .streak-banner p  { font-size: 14px; color: #8B5500; margin-top: 4px; }
+
+  /* ── RESULTS ── */
+  .results-card {
+    background: white; border-radius: 28px;
+    padding: 40px 28px; text-align: center;
+    border: 2px solid var(--border); box-shadow: var(--shadow);
+  }
+  .results-card .r-emoji { font-size: 80px; margin-bottom: 10px; display: block; }
+  .results-card h2 { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
+  .results-card .r-sub { font-size: 15px; color: var(--text-light); margin-bottom: 26px; line-height: 1.5; }
+  .stats-row { display: flex; justify-content: center; gap: 14px; margin-bottom: 24px; flex-wrap: wrap; }
+  .stat-box { background: #F8F8F8; border: 2px solid var(--border); border-radius: 16px; padding: 14px 20px; min-width: 96px; }
+  .stat-val { font-size: 30px; font-weight: 900; }
+  .stat-lbl { font-size: 11px; font-weight: 800; color: var(--text-light); margin-top: 2px; letter-spacing: .5px; }
+  .stat-box.green .stat-val { color: var(--green); }
+  .stat-box.red   .stat-val { color: var(--red);   }
+  .stat-box.purple.stat-val { color: var(--purple); }
+
+  .methods-result { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 22px; }
+  .mr-chip {
+    display: flex; align-items: center; gap: 6px;
+    border-radius: 12px; padding: 8px 14px;
+    font-size: 13px; font-weight: 800; border: 2px solid;
+  }
+  .mr-chip.ok  { background: #F0FDE4; border-color: var(--green); color: #166534; }
+  .mr-chip.bad { background: var(--red-light); border-color: var(--red); color: #991B1B; }
+
+  .review-section { text-align: left; margin-top: 20px; }
+  .review-title { font-size: 15px; font-weight: 900; color: var(--text-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; text-align: center; }
+  .review-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: #FAFAFA; border: 2px solid var(--border);
+    border-radius: 14px; padding: 12px 14px; margin-bottom: 10px;
+  }
+  .review-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .review-text { font-size: 13px; line-height: 1.55; }
+  .review-text strong { font-weight: 900; color: var(--text); }
+
+  .divider { height: 2px; background: var(--border); border-radius: 2px; margin: 20px 0; }
+
+  .btn-start {
+    width: 100%;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    color: white; border: none;
+    border-radius: 16px; padding: 18px;
+    font-family: 'Nunito', sans-serif; font-size: 17px; font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 5px 0 var(--purple-dark);
+    transition: transform .1s, box-shadow .1s;
+    letter-spacing: .5px;
+  }
+  .btn-start:hover { transform: translateY(-2px); box-shadow: 0 7px 0 var(--purple-dark); }
+  .btn-start:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--purple-dark); }
+
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 190; }
+  .overlay.show { display: block; }
+
+  @media(max-width:480px){
+    .q-card { padding: 18px 14px; }
+    .q-title { font-size: 16px; }
+    .option-btn { font-size: 13.5px; padding: 11px 13px; }
+    .method-grid { grid-template-columns: repeat(2,1fr); }
+    .start-card { padding: 30px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- HEADER -->
+<div class="header" id="header" style="display:none">
+  <button class="close-btn" onclick="confirmExit()">✕</button>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="hearts" id="heartsDisplay">❤️❤️❤️</div>
+</div>
+
+<!-- ══ START ══ -->
+<div class="screen active" id="startScreen">
+  <div class="start-card">
+    <span class="start-emoji">🔬</span>
+    <div class="part-badge">ЧАСТЬ 2 · ПРОДОЛЖЕНИЕ</div>
+    <h1>VR Детектив: Методологии</h1>
+    <p class="sub">Ты уже знаешь UX-инструменты. Теперь — как работают команды! Реши 10 кейсов и выясни, какая методология нужна в каждой ситуации.</p>
+
+    <div class="method-grid">
+      <div class="method-chip chip-waterfall"><span class="ci">🏗️</span>Waterfall</div>
+      <div class="method-chip chip-agile"><span class="ci">🔄</span>Agile</div>
+      <div class="method-chip chip-scrum"><span class="ci">🏃</span>Scrum</div>
+      <div class="method-chip chip-lean"><span class="ci">💡</span>Lean Startup</div>
+    </div>
+
+    <div class="mascot-row">
+      <div class="mascot">🦊</div>
+      <div class="speech-bubble">
+        Я Фокси — твой новый помощник! Водопад, спринты, MVP... звучит страшно? Не бойся! Разберём всё на смешных примерах из VR-мира 🎮
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="startQuiz()">🚀 Начать расследование!</button>
+  </div>
+</div>
+
+<!-- ══ QUESTION ══ -->
+<div class="screen" id="questionScreen">
+  <div class="q-card">
+    <div class="q-label-row">
+      <div class="q-label" id="qLabel"></div>
+      <div class="q-num" id="qNum"></div>
+    </div>
+    <div class="q-title" id="qTitle"></div>
+    <div id="funnyTag" style="display:none" class="funny-tag"></div>
+    <div class="case-box" id="caseBox"></div>
+    <div class="q-prompt" id="qPrompt"></div>
+    <div class="options" id="optionsContainer"></div>
+    <div class="feedback-panel" id="feedbackPanel">
+      <div class="fb-header">
+        <span class="fb-icon" id="fbIcon"></span>
+        <span id="fbTitle"></span>
+      </div>
+      <div class="fb-body" id="fbBody"></div>
+    </div>
+  </div>
+  <div class="action-area">
+    <button class="btn-check" id="checkBtn" disabled onclick="handleAction()">Проверить</button>
+  </div>
+</div>
+
+<!-- ══ RESULTS ══ -->
+<div class="screen" id="resultsScreen">
+  <div class="results-card">
+    <span class="r-emoji" id="resultEmoji">🏆</span>
+    <h2 id="resultTitle"></h2>
+    <p class="r-sub" id="resultSub"></p>
+    <div class="stats-row">
+      <div class="stat-box green"><div class="stat-val" id="sCorrect">0</div><div class="stat-lbl">ВЕРНО</div></div>
+      <div class="stat-box red">  <div class="stat-val" id="sWrong">0</div> <div class="stat-lbl">ОШИБОК</div></div>
+      <div class="stat-box" style="border-color:var(--purple)"><div class="stat-val" id="sXP" style="color:var(--purple)">0</div><div class="stat-lbl">XP</div></div>
+    </div>
+    <div class="methods-result" id="methodsResult"></div>
+    <div class="review-section" id="reviewSection">
+      <div class="review-title">📚 Запомни главное</div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-start" style="margin-top:8px" onclick="restartQuiz()">🔄 Пройти снова</button>
+  </div>
+</div>
+
+<!-- STREAK -->
+<div class="streak-banner" id="streakBanner">
+  <div class="streak-emoji-big" id="streakEmoji">🔥</div>
+  <h2 id="streakTitle">Серия 3!</h2>
+  <p id="streakSub">Три ответа подряд!</p>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+//  QUESTIONS
+// ═══════════════════════════════════════════
+const QUESTIONS = [
+
+  // 1 — WATERFALL
+  {
+    tool: "🏗️ Waterfall",
+    labelClass: "label-waterfall",
+    title: "Кейс 1: Как строить космический корабль",
+    funny: "😂 Немного смешно",
+    caseText: `Инженеры NASA строят новый ракетный двигатель. Главный инженер говорит:
+<strong>«Слушайте, давайте сделаем как стартап! Запустим двигатель, посмотрим что взорвётся, потом исправим!»</strong>
+<br><br>Остальные инженеры переглянулись. Через месяц проект был отдан другой команде, которая всё расписала на 2 года вперёд: расчёты → дизайн → сборка → тестирование → запуск.`,
+    prompt: "Почему для NASA правильно использовать Waterfall, а не Agile?",
+    options: [
+      "Потому что NASA большая компания и любит бюрократию",
+      "В NASA нельзя ошибиться — ракета взорвётся! Всё нужно продумать заранее, шаг за шагом",
+      "Agile слишком дорогой для NASA",
+      "Waterfall быстрее Agile для таких проектов"
+    ],
+    correct: 1,
+    feedback: {
+      correct: `<strong>Точно!</strong> Waterfall — это когда <strong>всё известно заранее</strong> и <strong>нельзя ошибиться.</strong><br><br>Шаги: Требования → Дизайн → Разработка → Тест → Запуск. Назад нельзя! Как водопад — вода течёт только вниз.<br><br>NASA, авиация, медицинские приборы — везде Waterfall, потому что цена ошибки = жизни людей.`,
+      wrong: `Верный ответ: <strong>Нельзя ошибиться!</strong><br><br>Waterfall = всё планируешь ЗАРАНЕЕ, шаг за шагом, без возврата назад. Для ракеты — единственный вариант! Нельзя же запустить «MVP ракеты», посмотреть что взорвалось, и переделать. 😅`
+    }
+  },
+
+  // 2 — AGILE
+  {
+    tool: "🔄 Agile",
+    labelClass: "label-agile",
+    title: "Кейс 2: VR-игра меняется каждую неделю",
+    funny: "🎮 Узнаёшь ситуацию?",
+    caseText: `Команда делает VR-игру про пиратов. Они написали план на 10 недель и начали работать по Waterfall. На 5-й неделе заказчик написал:
+<strong>«Ребята, я посмотрел на рынок — пираты сейчас не в тренде! Давайте переделаем на ниндзя?»</strong>
+<br><br>Команда ответила: <em>«Поздно! У нас план утверждён на 10 недель, нельзя менять!»</em>
+Заказчик расстроился. 5 недель работы потрачены на ненужных пиратов.`,
+    prompt: "Какую методологию нужно было использовать с самого начала?",
+    options: [
+      "Waterfall — просто надо было лучше планировать",
+      "Agile — работать короткими итерациями, показывать результат каждые 1-2 недели и корректировать",
+      "Lean Startup — сделать MVP ниндзя за день",
+      "Scrum — Daily Standup каждый день помог бы узнать о ниндзя раньше"
+    ],
+    correct: 1,
+    feedback: {
+      correct: `<strong>Верно!</strong> Agile = <strong>гибкий подход.</strong><br><br>Работаешь итерациями (1-2 недели). В конце каждой итерации показываешь результат заказчику. Если он говорит «пираты → ниндзя» — не страшно! В следующей итерации меняешь направление.<br><br><strong>Главный принцип Agile:</strong> «Готовность к изменениям важнее следования плану!»`,
+      wrong: `Верный ответ: <strong>Agile!</strong><br><br>Agile = гибко, итерациями. Каждые 2 недели показываешь результат заказчику. Сказал «ниндзя»? Ок, следующая итерация — ниндзя! Не потерял 5 недель, только 2.`
+    }
+  },
+
+  // 3 — SCRUM роли
+  {
+    tool: "🏃 Scrum",
+    labelClass: "label-scrum",
+    title: "Кейс 3: Кто главный в команде?",
+    funny: "👥 Немного драмы",
+    caseText: `Команда делает VR-тренажёр для пожарных. Во время планирования произошло следующее:
+<br><br>Программист Вася: <em>«Я хочу добавить крутые частицы огня! Это технически интересно!»</em>
+Дизайнер Маша: <em>«А я хочу делать задачи в том порядке, в котором хочу!»</em>
+Директор компании: <em>«Я хочу вначале сделать меню!»</em>
+Тренер-пожарный (заказчик): <em>«Мне НУЖНА симуляция тушения огня — это главное!»</em>
+<br><br><strong>Кто решает, что делать в первую очередь в Scrum?</strong>`,
+    prompt: "В Scrum кто определяет приоритеты задач?",
+    options: [
+      "Самый опытный программист в команде",
+      "Директор компании — он платит зарплату",
+      "Product Owner (Владелец продукта) — представитель заказчика, знает что нужно пользователям",
+      "Все голосуют и решают большинством"
+    ],
+    correct: 2,
+    feedback: {
+      correct: `<strong>Отлично!</strong> В Scrum 3 роли:<br><br>🎯 <strong>Product Owner</strong> — решает ЧТО делать и в каком порядке. Знает нужды пользователей. Ведёт backlog.<br>🛡️ <strong>Scrum Master</strong> — следит за процессом, убирает проблемы.<br>⚙️ <strong>Команда</strong> — решает КАК делать.<br><br>Тренер-пожарный (заказчик) → Product Owner. Именно он говорит: «Симуляция огня важнее меню!»`,
+      wrong: `Верный ответ: <strong>Product Owner!</strong><br><br>В Scrum Product Owner = заказчик или его представитель. Только он решает приоритеты. Вася хочет красивые частицы? Маша хочет свой порядок? Неважно! Product Owner сказал: «Симуляция огня первая» — значит первая!`
+    }
+  },
+
+  // 4 — LEAN STARTUP / MVP
+  {
+    tool: "💡 Lean Startup",
+    labelClass: "label-lean",
+    title: "Кейс 4: Год работы — ноль пользователей",
+    funny: "💸 Очень дорогая ошибка",
+    caseText: `Артём потратил <strong>год жизни и 3 миллиона рублей</strong> на VR-приложение «Виртуальный репетитор по математике». Красивая графика, 50 уроков, 10 типов задач. Выпустил!
+<br><br>Результат: <strong>50 скачиваний. 45 удалений.</strong>
+<br><br>Оказалось — дети не хотят учить математику в VR. Они хотят там <em>играть</em>, а не решать уравнения. Артём мог узнать это за неделю, если бы...`,
+    prompt: "Что должен был сделать Артём по методу Lean Startup?",
+    options: [
+      "Потратить ещё год и сделать приложение ещё лучше",
+      "Добавить больше уроков и задач",
+      "Сделать MVP за 1-2 недели — простейшую версию с 3 уроками — и дать детям попробовать",
+      "Написать Waterfall-план на 2 года"
+    ],
+    correct: 2,
+    feedback: {
+      correct: `<strong>Правильно!</strong> MVP = Minimum Viable Product = <strong>минимально работающий продукт.</strong><br><br>Цикл Lean Startup:<br>🔨 <strong>Build</strong> — сделай MVP за 1-2 недели<br>📊 <strong>Measure</strong> — дай людям, собери данные<br>📚 <strong>Learn</strong> — они пользуются? → продолжай. Нет? → PIVOT!<br><br>Артём потратил год. Мог узнать за неделю! MVP = 3 урока, простой интерфейс. Дети не играют → Pivot! Делай VR-игру с математикой.`,
+      wrong: `Верный ответ: <strong>MVP за 1-2 недели!</strong><br><br>Lean Startup: Build (MVP) → Measure (тест) → Learn (вывод). Артём должен был за неделю сделать 3 простых урока, дать детям, увидеть что не работает — и поменять идею. Не тратить год!`
+    }
+  },
+
+  // 5 — WATERFALL vs AGILE выбор
+  {
+    tool: "🏗️ vs 🔄 Выбор",
+    labelClass: "label-mixed",
+    title: "Кейс 5: Стройка или стартап?",
+    funny: "🤔 Думай внимательно!",
+    caseText: `Два проекта запускаются одновременно:
+<br><br><strong>Проект А:</strong> Строительная компания строит VR-центр. Здание 5 этажей, 200 миллионов рублей, план на 18 месяцев. Требования известны — нужно просто построить.
+<br><br><strong>Проект Б:</strong> Стартап делает VR-приложение для знакомств. Никто не знает, зайдёт ли идея. Хотят быстро проверить концепцию.`,
+    prompt: "Какая методология подходит каждому проекту?",
+    options: [
+      "Оба — Waterfall: большие проекты требуют планирования",
+      "Оба — Agile: гибкость везде полезна",
+      "Проект А — Waterfall (всё известно, нельзя менять), Проект Б — Lean Startup (проверить идею быстро)",
+      "Проект А — Lean Startup, Проект Б — Waterfall"
+    ],
+    correct: 2,
+    feedback: {
+      correct: `<strong>Детектив видит разницу!</strong><br><br>🏗️ <strong>Проект А → Waterfall:</strong> здание строишь последовательно. Фундамент → стены → крыша. Нельзя поменять план на 5-м месяце! Всё известно заранее.<br><br>💡 <strong>Проект Б → Lean Startup:</strong> никто не знает, хотят ли люди знакомиться в VR! Делай MVP за 2 недели → тестируй → меняй идею. Не трать год на то, что никому не нужно!`,
+      wrong: `Верный ответ: <strong>А — Waterfall, Б — Lean Startup.</strong><br><br>Ключевой вопрос: «Ты знаешь, что делать?»<br>• Знаешь + нельзя менять = Waterfall<br>• Не знаешь, нужно проверить идею = Lean Startup`
+    }
+  },
+
+  // 6 — SCRUM спринт
+  {
+    tool: "🏃 Scrum",
+    labelClass: "label-scrum",
+    title: "Кейс 6: Срочная задача во время спринта",
+    funny: "⚡ Типичная ситуация!",
+    caseText: `Команда разрабатывает VR-симулятор вождения. Идёт 2-недельный спринт, 5-й день из 10.
+<br><br>Вдруг директор врывается в офис: <strong>«СТОП! Клиент хочет добавить режим «Ночное вождение»! Немедленно начинайте делать!»</strong>
+<br><br>Scrum Master спокойно говорит: <em>«Задача принята! Запишем в backlog. Возьмём в следующий спринт через 5 дней.»</em>
+<br>Директор злится: <strong>«Вы что, не понимаете — это СРОЧНО!»</strong>`,
+    prompt: "Кто прав — директор или Scrum Master?",
+    options: [
+      "Директор прав — клиент важнее всего, нужно бросить всё и делать",
+      "Scrum Master прав — спринт нельзя прерывать. Задача пойдёт в следующий спринт через 5 дней",
+      "Нужно провести голосование в команде",
+      "Scrum Master должен уволиться за неуважение к директору"
+    ],
+    correct: 1,
+    feedback: {
+      correct: `<strong>Scrum Master прав!</strong><br><br>В Scrum спринт <strong>нельзя прерывать!</strong> Почему?<br><br>Если каждый день добавлять «срочные» задачи → ни одна задача не доделывается → хаос!<br><br>Scrum защищает команду: <em>«Записали, возьмём через 5 дней!»</em> Клиент подождёт 5 дней? Конечно! Зато команда доделает текущее и возьмётся с полной силой. 5 дней — не вечность!`,
+      wrong: `Верный ответ: <strong>Scrum Master прав!</strong><br><br>Спринт = обязательство на 2 недели. Нельзя прерывать! Если каждый день «срочные» задачи — ничего не доделается. Все новые задачи идут в backlog и берутся в СЛЕДУЮЩИЙ спринт.`
+    }
+  },
+
+  // 7 — LEAN STARTUP PIVOT
+  {
+    tool: "💡 Lean Startup",
+    labelClass: "label-lean",
+    title: "Кейс 7: Провал — это хорошо?",
+    funny: "🔄 Звучит странно, но правда!",
+    caseText: `Стартап сделал VR-приложение для виртуальных концертов. MVP готов за 3 недели. Тест с 50 пользователями показал:
+<br>• <strong>Концерты смотрят 5 минут и уходят</strong>
+<br>• <strong>Зато все 50 часами общались друг с другом в VR-фойе перед концертом!</strong>
+<br><br>Команда расстроена — концертная идея не зашла. Инвестор говорит: <strong>«Это не провал! Это открытие! Делайте социальную VR-платформу для общения!»</strong>`,
+    prompt: "Как называется смена идеи в Lean Startup, когда данные показывают другой путь?",
+    options: [
+      "Фэйл — это просто провал, нужно делать лучше",
+      "Pivot — кардинальная смена направления на основе данных от пользователей",
+      "Scrum-review — показ результатов заказчику",
+      "Waterfall-пересмотр — корректировка плана"
+    ],
+    correct: 1,
+    feedback: {
+      correct: `<strong>Pivot!</strong> Это ключевое понятие Lean Startup!<br><br>🔄 <strong>PIVOT</strong> = «разворот» — меняешь идею, когда данные показывают другой путь.<br>➡️ <strong>PERSEVERE</strong> = «продолжать» — идея работает, развивай дальше!<br><br><strong>Реальные примеры Pivot:</strong><br>• Instagram был приложением для check-in → стал фотосетью<br>• Twitter был платформой для подкастов → стал микроблогом<br><br>Данные — это подарок! Провала нет, есть открытие!`,
+      wrong: `Верный ответ: <strong>Pivot!</strong><br><br>Pivot = смена направления на основе данных. Не провал — открытие! Instagram, Twitter — оба сделали Pivot. Данные показали новую возможность → команда повернула. Это и есть Lean Startup!`
+    }
+  },
+
+  // 8 — SCRUM Daily Standup
+  {
+    tool: "🏃 Scrum",
+    labelClass: "label-scrum",
+    title: "Кейс 8: Встреча, которую все ненавидят",
+    funny: "😴 Кто-то узнает себя...",
+    caseText: `В VR-студии каждое утро проводят Daily Standup. Он проходит так:
+<br><br><strong>Менеджер Игорь:</strong> <em>«Коллеги, давайте обсудим стратегию развития на следующий год, потом поговорим о процессах, потом...»</em>
+<br><br>Через <strong>45 минут</strong> все устали. Программисты не знают, что делать. Никто не обсудил реальные задачи на сегодня.
+<br><br>Scrum Master приходит на следующий день и всё меняет.`,
+    prompt: "Как должен выглядеть правильный Daily Standup в Scrum?",
+    options: [
+      "45 минут обсуждения стратегии и планов",
+      "15 минут стоя, каждый отвечает на 3 вопроса: что делал вчера, что буду делать сегодня, есть ли проблемы",
+      "1 час сидя, обсуждение всех задач подробно",
+      "Ежедневный митинг не нужен — это трата времени"
+    ],
+    correct: 1,
+    feedback: {
+      correct: `<strong>Именно!</strong> Daily Standup = <strong>15 минут СТРОГО, СТОЯ!</strong><br><br>Каждый отвечает на 3 вопроса:<br>1. Что делал <strong>вчера?</strong><br>2. Что буду делать <strong>сегодня?</strong><br>3. Есть ли <strong>блокеры</strong> (проблемы)?<br><br>Почему стоя? Стоять неудобно → никто не затягивает! Всё лишнее — после, в меньшем составе.<br><br>Встреча нужна для <strong>синхронизации</strong>, а не для обсуждения стратегии!`,
+      wrong: `Верный ответ: <strong>15 минут стоя, 3 вопроса!</strong><br><br>Daily Standup = синхронизация команды за 15 минут. Три вопроса: вчера / сегодня / проблемы. Стоя — чтобы никто не растягивал. Стратегия и долгие обсуждения — на других встречах!`
+    }
+  },
+
+  // 9 — Выбор методологии (школьный проект)
+  {
+    tool: "🎯 Выбор методологии",
+    labelClass: "label-mixed",
+    title: "Кейс 9: Какая методология для вашего проекта?",
+    funny: "🎓 Это про вас!",
+    caseText: `Вы — команда из 5 человек. Делаете VR-проект для финальной защиты через <strong>8 недель</strong>. Тема: VR-приложение для изучения истории.
+<br><br>Требования примерно известны. Нужна гибкость — учитель может попросить изменить тему эпохи. Команде нужна структура и чёткие роли — вы только учитесь работать вместе.`,
+    prompt: "Какая методология идеально подходит для вашего учебного VR-проекта?",
+    options: [
+      "Waterfall — расписать все 8 недель по дням и строго следовать",
+      "Lean Startup — делать MVP каждую неделю и проверять с учителем",
+      "Scrum — работать спринтами по 2 недели, с ролями и встречами",
+      "Agile без правил — просто работать гибко, без конкретных ритуалов"
+    ],
+    correct: 2,
+    feedback: {
+      correct: `<strong>Scrum — идеально для вашей команды!</strong><br><br>Почему именно Scrum?<br>• <strong>4 спринта</strong> по 2 недели = ровно 8 недель до защиты<br>• <strong>Product Owner</strong> = учитель (он знает что нужно)<br>• <strong>Scrum Master</strong> = самый организованный в команде<br>• <strong>Sprint Review</strong> = показываете учителю каждые 2 недели → он говорит что изменить<br>• <strong>Retrospective</strong> = учитесь работать лучше каждый спринт!<br><br>Структура есть, гибкость есть. Идеально!`,
+      wrong: `Верный ответ: <strong>Scrum!</strong><br><br>Команда 5 чел. + 8 недель + нужна структура + гибкость = Scrum. 4 спринта по 2 недели. Роли, Daily Standup, Sprint Review с учителем, Retrospective. Waterfall слишком жёсткий — учитель может попросить изменить.`
+    }
+  },
+
+  // 10 — ФИНАЛЬНЫЙ СУПЕРКЕЙС
+  {
+    tool: "🏆 Финальный кейс",
+    labelClass: "label-mixed",
+    title: "Кейс 10: Расследование закрыто!",
+    funny: "🕵️ Всё в одном!",
+    caseText: `Большая VR-студия запускает 4 проекта одновременно:
+<br><br><strong>Проект 1:</strong> Военный симулятор для армии. Требования строжайшие, всё согласовано на год вперёд.
+<br><strong>Проект 2:</strong> Новая социальная VR-сеть. Никто не знает, зайдёт ли — нужно быстро проверить.
+<br><strong>Проект 3:</strong> Обновление популярной VR-игры. Команда 7 человек, каждые 2 недели показывают результат игрокам.
+<br><strong>Проект 4:</strong> Маленький VR-фильтр для Instagram. Одна разработчица, делает за 3 дня.`,
+    prompt: "Какая методология подходит каждому проекту?",
+    options: [
+      "1-Waterfall, 2-Lean Startup, 3-Scrum, 4-Agile без жёстких правил",
+      "Все проекты — Scrum: это лучшая методология",
+      "1-Agile, 2-Waterfall, 3-Lean Startup, 4-Scrum",
+      "1-Lean Startup, 2-Scrum, 3-Waterfall, 4-Agile"
+    ],
+    correct: 0,
+    feedback: {
+      correct: `<strong>🏆 Легендарный детектив!</strong><br><br>1. <strong>Военный симулятор → Waterfall:</strong> строгие требования, нельзя ошибиться, всё известно заранее.<br><br>2. <strong>VR-сеть → Lean Startup:</strong> неизвестно, зайдёт ли! MVP → тест → Pivot или Persevere.<br><br>3. <strong>VR-игра → Scrum:</strong> команда 7 чел., спринты 2 недели, показывают игрокам — идеально!<br><br>4. <strong>Instagram-фильтр → Agile (без лишнего):</strong> один человек, маленький проект — Scrum с Daily Standup с самим собой не нужен 😄`,
+      wrong: `Верный ответ: <strong>1-Waterfall, 2-Lean Startup, 3-Scrum, 4-Agile.</strong><br><br>Нет «лучшей» методологии! Всё зависит от ситуации. Ключевые вопросы:<br>• Всё известно + нельзя ошибиться? → Waterfall<br>• Не знаешь, зайдёт ли? → Lean Startup<br>• Команда + нужна структура? → Scrum<br>• Маленький проект/один человек? → Agile`
+    }
+  }
+];
+
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let cQ = 0, hearts = 3, correct = 0, wrong = 0, streak = 0, xp = 0;
+let answered = false, selected = -1;
+let methodStats = {};
+
+// ═══════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════
+function startQuiz() {
+  cQ = 0; hearts = 3; correct = 0; wrong = 0; streak = 0; xp = 0;
+  answered = false; selected = -1; methodStats = {};
+  showScreen('questionScreen');
+  document.getElementById('header').style.display = 'flex';
+  render();
+  updateHeader();
+}
+
+// ═══════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════
+function render() {
+  const q = QUESTIONS[cQ];
+  answered = false; selected = -1;
+
+  const lbl = document.getElementById('qLabel');
+  lbl.textContent = q.tool;
+  lbl.className = 'q-label ' + q.labelClass;
+
+  document.getElementById('qNum').textContent = `${cQ+1} / ${QUESTIONS.length}`;
+  document.getElementById('qTitle').textContent = q.title;
+  document.getElementById('caseBox').innerHTML = q.caseText;
+
+  const ft = document.getElementById('funnyTag');
+  if (q.funny) { ft.textContent = q.funny; ft.style.display = 'inline-block'; }
+  else          { ft.style.display = 'none'; }
+
+  document.getElementById('qPrompt').textContent = q.prompt;
+
+  const container = document.getElementById('optionsContainer');
+  container.innerHTML = '';
+  ['A','B','C','D'].forEach((l,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-letter">${l}</span><span>${q.options[i]}</span>`;
+    btn.onclick = () => pick(i);
+    container.appendChild(btn);
+  });
+
+  const fp = document.getElementById('feedbackPanel');
+  fp.className = 'feedback-panel';
+
+  const cb = document.getElementById('checkBtn');
+  cb.textContent = 'Проверить';
+  cb.className = 'btn-check';
+  cb.disabled = true;
+
+  document.getElementById('progressBar').style.width = (cQ / QUESTIONS.length * 100) + '%';
+}
+
+function pick(idx) {
+  if (answered) return;
+  selected = idx;
+  document.querySelectorAll('.option-btn').forEach((b,i) => b.classList.toggle('selected', i===idx));
+  document.getElementById('checkBtn').disabled = false;
+}
+
+// ═══════════════════════════════════════════
+//  CHECK / NEXT
+// ═══════════════════════════════════════════
+function handleAction() {
+  answered ? next() : check();
+}
+
+function check() {
+  if (selected === -1) return;
+  answered = true;
+  const q = QUESTIONS[cQ];
+  const ok = selected === q.correct;
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+
+  const tool = q.tool;
+  if (!methodStats[tool]) methodStats[tool] = {ok:0, bad:0};
+
+  if (ok) {
+    btns[selected].className = 'option-btn correct';
+    streak++; correct++;
+    xp += 10 + (streak >= 3 ? 5 : 0);
+    methodStats[tool].ok++;
+    showFeedback(true, q.feedback.correct);
+    if (streak === 3 || streak === 5) showStreak(streak);
+  } else {
+    btns[selected].className = 'option-btn wrong';
+    btns[q.correct].className = 'option-btn correct';
+    streak = 0; wrong++;
+    hearts = Math.max(0, hearts-1);
+    methodStats[tool].bad++;
+    showFeedback(false, q.feedback.wrong);
+    shakeCard();
+  }
+  updateHeader();
+  const cb = document.getElementById('checkBtn');
+  cb.textContent = 'Продолжить →';
+  cb.className = 'btn-check next-mode';
+  cb.disabled = false;
+}
+
+function showFeedback(ok, text) {
+  const fp = document.getElementById('feedbackPanel');
+  fp.className = 'feedback-panel show ' + (ok ? 'correct-fb' : 'wrong-fb');
+  document.getElementById('fbIcon').textContent = ok ? '🎉' : '💡';
+  document.getElementById('fbTitle').textContent = ok ? 'Правильно!' : 'Не совсем...';
+  document.getElementById('fbBody').innerHTML = text;
+}
+
+function next() {
+  cQ++;
+  if (cQ >= QUESTIONS.length || hearts === 0) showResults();
+  else {
+    const s = document.getElementById('questionScreen');
+    s.style.animation = 'none'; s.offsetHeight; s.style.animation = '';
+    render();
+  }
+}
+
+// ═══════════════════════════════════════════
+//  STREAK
+// ═══════════════════════════════════════════
+function showStreak(n) {
+  const b = document.getElementById('streakBanner');
+  const ov = document.getElementById('overlay');
+  document.getElementById('streakEmoji').textContent = n>=5?'⚡':'🔥';
+  document.getElementById('streakTitle').textContent = `Серия ${n}!`;
+  document.getElementById('streakSub').textContent = n>=5 ? 'Пять подряд! Ты мастер!' : 'Три правильных подряд!';
+  b.classList.add('show'); ov.classList.add('show');
+  setTimeout(() => { b.classList.remove('show'); ov.classList.remove('show'); }, 1800);
+}
+
+function shakeCard() {
+  const c = document.querySelector('.q-card');
+  c.style.animation = 'shake .4s ease';
+  c.addEventListener('animationend', () => c.style.animation = '', {once:true});
+}
+
+function updateHeader() {
+  document.getElementById('heartsDisplay').textContent = '❤️'.repeat(hearts) + '🖤'.repeat(3-hearts);
+}
+
+// ═══════════════════════════════════════════
+//  RESULTS
+// ═══════════════════════════════════════════
+const CHEATSHEET = [
+  { icon:'🏗️', text:'<strong>Waterfall</strong> — последовательно, нельзя менять план. Подходит когда всё известно и цена ошибки высокая (строительство, авиация, медтехника).' },
+  { icon:'🔄', text:'<strong>Agile</strong> — гибко, итерациями. Можно менять план. Подходит для цифровых продуктов с меняющимися требованиями.' },
+  { icon:'🏃', text:'<strong>Scrum</strong> — конкретный способ Agile. Спринты 1-2 нед., 3 роли (Product Owner, Scrum Master, Команда), 4 встречи. Для команд 3-9 человек.' },
+  { icon:'💡', text:'<strong>Lean Startup</strong> — Build→Measure→Learn. MVP → тест → Pivot или Persevere. Для стартапов с неизвестной идеей.' },
+];
+
+function showResults() {
+  showScreen('resultsScreen');
+  document.getElementById('header').style.display = 'none';
+  document.getElementById('progressBar').style.width = '100%';
+
+  document.getElementById('sCorrect').textContent = correct;
+  document.getElementById('sWrong').textContent = wrong;
+  document.getElementById('sXP').textContent = xp;
+
+  const pct = correct / QUESTIONS.length;
+  let emoji, title, sub;
+  if (pct === 1)    { emoji='🏆'; title='Идеально! Ты — Мастер Методологий!';   sub='Все 10 кейсов верно! Теперь ты знаешь больше многих взрослых!'; }
+  else if (pct>=.8) { emoji='🎉'; title='Отличный результат!';                   sub='Ты отлично разбираешься в методологиях. Пара мелочей — и будет идеально!'; }
+  else if (pct>=.6) { emoji='😊'; title='Хорошая работа!';                       sub='Основы понятны! Повтори Scrum и Lean Startup — там были сложные кейсы.'; }
+  else              { emoji='💪'; title='Продолжай разбираться!';                 sub='Методологии требуют практики. Пройди ещё раз — с каждым разом будет лучше!'; }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultSub').textContent = sub;
+
+  const mr = document.getElementById('methodsResult');
+  mr.innerHTML = '';
+  Object.entries(methodStats).forEach(([tool, s]) => {
+    const chip = document.createElement('div');
+    chip.className = 'mr-chip ' + (s.bad===0 ? 'ok' : 'bad');
+    chip.innerHTML = `${s.bad===0?'✅':'❌'} ${tool}`;
+    mr.appendChild(chip);
+  });
+
+  const rev = document.getElementById('reviewSection');
+  CHEATSHEET.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'review-item';
+    el.innerHTML = `<div class="review-icon">${item.icon}</div><div class="review-text">${item.text}</div>`;
+    rev.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function restartQuiz() {
+  showScreen('startScreen');
+  document.getElementById('header').style.display = 'none';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('reviewSection').innerHTML = '<div class="review-title">📚 Запомни главное</div>';
+}
+function confirmExit() {
+  if (confirm('Выйти? Прогресс не сохранится.')) restartQuiz();
+}
+
+// shake keyframe
+const style = document.createElement('style');
+style.textContent = `@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}`;
+document.head.appendChild(style);
+</script>
+</body>
+</html>
